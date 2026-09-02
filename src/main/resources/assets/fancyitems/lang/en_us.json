@@ -1,0 +1,7 @@
+{
+  "fancyitems.configuration.title": "Fancy Items Configuration",
+  "fancyitems.configuration.section.fancyitems.client.toml": "Fancy Items Configuration",
+  "fancyitems.configuration.section.fancyitems.client.toml.title": "Fancy Items Configuration",
+  "fancyitems.configuration.enableStarburst": "Enable Starburst",
+  "fancyitems.configuration.enableStarburst.tooltip": "Whether to enable the starburst effect for items with a rarity or colored name"
+}
