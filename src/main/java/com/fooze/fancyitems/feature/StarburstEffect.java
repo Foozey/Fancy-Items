@@ -1,84 +1,98 @@
 package com.fooze.fancyitems.feature;
 
 import com.fooze.fancyitems.Config;
+import com.fooze.fancyitems.util.Color;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.Style;
-import net.minecraft.network.chat.TextColor;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Rarity;
 import org.joml.Matrix4f;
 
 public class StarburstEffect {
-    private static final int RAY_COUNT = 9; // Number of rays
-    private static final int RAY_COUNT_LENGTH = 3; // Number of rays to add length variation to before repeating
-    private static final int RAY_COUNT_WIDTH = 2; // Number of rays to add width variation to before repeating
-    private static final float RAY_LENGTH = 0.5F; // Length of rays before variation and pulsing
-    private static final float RAY_WIDTH = 0.25F; // Width of rays before variation and pulsing
-    private static final float LENGTH_VARIATION = 0.1F; // Amount of variation in ray length
-    private static final float WIDTH_VARIATION = 0.05F; // Amount of variation in ray width
-    private static final float PULSE_LENGTH_MIN = 0.9F; // Minimum ray length during pulsing
-    private static final float PULSE_LENGTH_MAX = 1.1F; // Maximum ray length during pulsing
-    private static final float PULSE_WIDTH_MIN = 0.33F; // Minimum ray width during pulsing
-    private static final float PULSE_WIDTH_MAX = 1.5F; // Maximum ray width during pulsing
-    private static final float PULSE_SPEED = 0.075F; // Speed of the pulsing animation
-    private static final float ROTATION_SPEED = 0.025F; // Speed of the rotation
-    private static final float ANIMATION_OFFSET = 0.1F; // Offset to desynchronize each item
-
-    private StarburstEffect() {
-    }
-
-    // Renders a starburst effect behind an inventory item
-    public static void render(GuiGraphics graphics, ItemStack stack, int seed) {
+    // Renders a starburst effect behind inventory items
+    public static void render(GuiGraphics transform, ItemStack stack, int seed) {
+        // Get the instance and screen
         Minecraft minecraft = Minecraft.getInstance();
+        Screen screen = minecraft.screen;
 
-        // Don't render if the config option is disabled, there's no item, or the screen is invalid
-        if (!Config.ENABLE_STARBURST.get() || stack.isEmpty() || minecraft.screen != null
-                && !(minecraft.screen instanceof AbstractContainerScreen<?>)) {
+        // Don't render if the effect is disabled, there's no item, or the screen is invalid
+        if (!Config.ENABLE_STARBURST.get() || stack.isEmpty() || screen != null
+                && !(screen instanceof AbstractContainerScreen<?>)) {
             return;
         }
 
-        // Calculate the phase of the animation (0.0 to 1.0)
+        // Get the ray properties
+        int rayCount = Config.STARBURST_RAY_COUNT.get();
+        float rayLength = Config.STARBURST_RAY_LENGTH.get().floatValue();
+        float rayWidth = Config.STARBURST_RAY_WIDTH.get().floatValue();
+        float lengthVariation = Config.STARBURST_LENGTH_VARIATION.get().floatValue();
+        int lengthVariationCount = Math.max(Config.STARBURST_LENGTH_VARIATION_COUNT.get(), 1);
+        float widthVariation = Config.STARBURST_WIDTH_VARIATION.get().floatValue();
+        int widthVariationCount = Math.max(Config.STARBURST_WIDTH_VARIATION_COUNT.get(), 1);
+
+        // Calculate the animation values
+        int pulseDuration = Config.STARBURST_PULSE_DURATION.get();
+        int rotationDuration = Config.STARBURST_ROTATION_DURATION.get();
+        float phase = 0.0F;
         float time = getTime(minecraft);
-        float phase = ((float) Math.sin(time * PULSE_SPEED + seed * ANIMATION_OFFSET) + 1.0F) / 2.0F;
+        int offset = Math.floorMod(seed + stack.hashCode(), Math.max(Math.max(pulseDuration, rotationDuration), 1));
+        float pulseLength = 1.0F;
+        float pulseWidth = 1.0F;
 
-        // Calculate the pulse length and width based on the phase of the animation
-        float pulseLength = PULSE_LENGTH_MIN + (PULSE_LENGTH_MAX - PULSE_LENGTH_MIN) * phase;
-        float pulseWidth = PULSE_WIDTH_MIN + (PULSE_WIDTH_MAX - PULSE_WIDTH_MIN) * phase;
+        // Only calculate the animation phase if there's a pulse duration
+        if (pulseDuration > 0) {
+            phase = ((float) Math.sin((time + offset) * Math.PI * 2.0F / pulseDuration) + 1.0F) / 2.0F;
+        }
 
-        // Set the color to the item's name or rarity
-        Integer color = getColor(stack);
+        // Only calculate the pulse length and width if there's a pulse duration
+        if (pulseDuration > 0) {
+            float pulseLengthMin = Config.STARBURST_PULSE_LENGTH_MIN.get().floatValue();
+            float pulseLengthMax = Config.STARBURST_PULSE_LENGTH_MAX.get().floatValue();
+            float pulseWidthMin = Config.STARBURST_PULSE_WIDTH_MIN.get().floatValue();
+            float pulseWidthMax = Config.STARBURST_PULSE_WIDTH_MAX.get().floatValue();
+            pulseLength = pulseLengthMin + (pulseLengthMax - pulseLengthMin) * phase;
+            pulseWidth = pulseWidthMin + (pulseWidthMax - pulseWidthMin) * phase;
+        }
+
+        // Prepare rendering
+        VertexConsumer rays = transform.bufferSource().getBuffer(RenderType.dragonRays());
+        Integer color = Color.getColor(stack);
 
         // Only render if there's a color
         if (color == null) {
             return;
         }
 
-        // Draw rays with the dragon ray render type
-        VertexConsumer rays = graphics.bufferSource().getBuffer(RenderType.dragonRays());
-
         // Draw rays in a rotating circle with varying length and width
-        for (int ray = 0; ray < RAY_COUNT; ray++) {
-            float angle = (float) (ray * (Math.PI * 2.0D / RAY_COUNT) + time * ROTATION_SPEED);
-            float length = pulseLength * (RAY_LENGTH + (ray % RAY_COUNT_LENGTH) * LENGTH_VARIATION);
-            float width = pulseWidth * (RAY_WIDTH + (ray % RAY_COUNT_WIDTH) * WIDTH_VARIATION);
+        for (int ray = 0; ray < rayCount; ray++) {
+            // Calculate ray angle
+            float angle = (float) (ray * (Math.PI * 2.0D / rayCount));
 
-            graphics.pose().pushPose();
-            graphics.pose().mulPose(Axis.ZP.rotation(angle));
-            addRay(rays, graphics.pose().last().pose(), length, width, color);
-            graphics.pose().popPose();
+            // Only rotate if there's rotation duration
+            if (rotationDuration > 0) {
+                angle += (float) ((time + offset) * Math.PI * 2.0D / rotationDuration);
+            }
+
+            // Calculate ray length and width
+            float length = pulseLength * (rayLength + (ray % lengthVariationCount) * lengthVariation);
+            float width = pulseWidth * (rayWidth + (ray % widthVariationCount) * widthVariation);
+
+            // Draw the ray
+            transform.pose().pushPose();
+            transform.pose().mulPose(Axis.ZP.rotation(angle));
+            Matrix4f matrix = transform.pose().last().pose();
+            addRay(rays, matrix, length, width, color);
+            transform.pose().popPose();
         }
     }
 
     // Gets the time used for the animation
     private static float getTime(Minecraft minecraft) {
-        // If a player exists, align the animation with the current tick and partial tick timing
+        // If a player exists, align the animation with the current tick
         if (minecraft.player != null) {
             return minecraft.player.tickCount + minecraft.getTimer().getGameTimeDeltaPartialTick(true);
         }
@@ -88,56 +102,15 @@ public class StarburstEffect {
     }
 
     // Draws a triangular ray
-    private static void addRay(VertexConsumer vertices, Matrix4f transform, float length, float width, int color) {
-        // Split RGB color into vertex color channels
+    private static void addRay(VertexConsumer vertices, Matrix4f matrix, float length, float width, int color) {
+        // Get the RGB color channels
         int red = color >> 16 & 0xFF;
         int green = color >> 8 & 0xFF;
         int blue = color & 0xFF;
 
         // Add a triangle that fades outward from the center
-        vertices.addVertex(transform, 0.0F, 0.0F, 0.0F).setColor(red, green, blue, 255);
-        vertices.addVertex(transform, width, length, 0.0F).setColor(red, green, blue, 0);
-        vertices.addVertex(transform, -width, length, 0.0F).setColor(red, green, blue, 0);
-    }
-
-    // Gets the color of the starburst based on the item's name or rarity
-    private static Integer getColor(ItemStack stack) {
-        Integer nameColor = findColor(stack.getHoverName());
-
-        // Use the item's name color if it's not white
-        if (nameColor != null && !nameColor.equals(ChatFormatting.WHITE.getColor())) {
-            return nameColor;
-        }
-
-        // Don't render the starburst for common items
-        if (stack.getRarity() == Rarity.COMMON) {
-            return null;
-        }
-
-        // Use the item's rarity color if the name color is white
-        return stack.getRarity().color().getColor();
-    }
-
-    // Finds the color of a component's text
-    private static Integer findColor(Component component) {
-        Style style = component.getStyle();
-        TextColor color = style.getColor();
-
-        // Check if the component has a color
-        if (color != null) {
-            return color.getValue();
-        }
-
-        // Check if the component has any children that have a color
-        for (Component child : component.getSiblings()) {
-            Integer childColor = findColor(child);
-
-            if (childColor != null) {
-                return childColor;
-            }
-        }
-
-        // If no color is found, return null
-        return null;
+        vertices.addVertex(matrix, 0.0F, 0.0F, 0.0F).setColor(red, green, blue, 255);
+        vertices.addVertex(matrix, width, length, 0.0F).setColor(red, green, blue, 0);
+        vertices.addVertex(matrix, -width, length, 0.0F).setColor(red, green, blue, 0);
     }
 }

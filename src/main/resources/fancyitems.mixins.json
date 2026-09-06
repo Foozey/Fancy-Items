@@ -4,7 +4,9 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [],
   "client": [
-    "GuiGraphicsMixin"
+    "EntityRendererMixin",
+    "GuiGraphicsMixin",
+    "ItemEntityRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1
