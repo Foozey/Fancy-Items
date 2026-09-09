@@ -29,6 +29,7 @@ public class Config {
         STARBURST_PULSE_WIDTH_MAX = BUILDER.defineInRange("starburstPulseWidthMax", 1.5D, 0.1D, 2.0D);
         STARBURST_PULSE_DURATION = BUILDER.defineInRange("starburstPulseDuration", 80, 1, 1200);
         STARBURST_ROTATION_DURATION = BUILDER.defineInRange("starburstRotationDuration", 400, 1, 1200);
+        STARBURST_ANIMATION_OFFSET = BUILDER.define("starburstAnimationOffset", true);
         BUILDER.pop();
 
         // Beam Effect
@@ -99,6 +100,7 @@ public class Config {
     public static final ModConfigSpec.DoubleValue STARBURST_PULSE_WIDTH_MAX;
     public static final ModConfigSpec.IntValue STARBURST_PULSE_DURATION;
     public static final ModConfigSpec.IntValue STARBURST_ROTATION_DURATION;
+    public static final ModConfigSpec.BooleanValue STARBURST_ANIMATION_OFFSET;
 
     // Beam Effect
     public static final ModConfigSpec.BooleanValue ENABLE_BEAM_EFFECT;

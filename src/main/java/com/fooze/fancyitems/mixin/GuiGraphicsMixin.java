@@ -25,6 +25,6 @@ public class GuiGraphicsMixin {
             LivingEntity entity, Level level, ItemStack stack,
             int x, int y, int seed, int guiOffset, CallbackInfo callback
     ) {
-        StarburstEffect.render((GuiGraphics) (Object) this, stack, seed);
+        StarburstEffect.render((GuiGraphics) (Object) this, stack);
     }
 }

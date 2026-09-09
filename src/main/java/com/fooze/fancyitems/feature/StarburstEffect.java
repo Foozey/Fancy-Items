@@ -6,28 +6,20 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.world.item.ItemStack;
 import org.joml.Matrix4f;
 
 public class StarburstEffect {
     // Renders a starburst effect behind inventory items
-    public static void render(GuiGraphics transform, ItemStack item, int seed) {
+    public static void render(GuiGraphics transform, ItemStack item) {
         // Don't render if the effect is disabled or there's no item
         if (!Config.ENABLE_STARBURST_EFFECT.get() || item.isEmpty()) {
             return;
         }
 
-        // Get the instance and screen
+        // Get the Minecraft instance
         Minecraft minecraft = Minecraft.getInstance();
-        Screen screen = minecraft.screen;
-
-        // Don't render if the screen is invalid
-        if (screen != null && !(screen instanceof AbstractContainerScreen)) {
-            return;
-        }
 
         // Get the item color
         Integer color = Color.getColor(item);
@@ -37,7 +29,7 @@ public class StarburstEffect {
             return;
         }
 
-        // Get the ray properties
+        // Get the starburst properties
         int rayCount = Config.STARBURST_RAY_COUNT.get();
         float rayLength = Config.STARBURST_RAY_LENGTH.get().floatValue();
         float rayWidth = Config.STARBURST_RAY_WIDTH.get().floatValue();
@@ -45,17 +37,28 @@ public class StarburstEffect {
         int lengthVariationCount = Config.STARBURST_LENGTH_VARIATION_COUNT.get();
         float widthVariation = Config.STARBURST_WIDTH_VARIATION.get().floatValue();
         int widthVariationCount = Config.STARBURST_WIDTH_VARIATION_COUNT.get();
-
-        // Calculate the animation
-        int pulseDuration = Config.STARBURST_PULSE_DURATION.get();
-        int rotationDuration = Config.STARBURST_ROTATION_DURATION.get();
-        float time = minecraft.player.tickCount + minecraft.getTimer().getGameTimeDeltaPartialTick(true);
-        int offset = Math.floorMod(seed + item.hashCode(), Math.max(pulseDuration, rotationDuration));
-        float phase = ((float) Math.sin((time + offset) * Math.PI * 2.0F / pulseDuration) + 1.0F) / 2.0F;
         float pulseLengthMin = Config.STARBURST_PULSE_LENGTH_MIN.get().floatValue();
         float pulseLengthMax = Config.STARBURST_PULSE_LENGTH_MAX.get().floatValue();
         float pulseWidthMin = Config.STARBURST_PULSE_WIDTH_MIN.get().floatValue();
         float pulseWidthMax = Config.STARBURST_PULSE_WIDTH_MAX.get().floatValue();
+        int pulseDuration = Config.STARBURST_PULSE_DURATION.get();
+        int rotationDuration = Config.STARBURST_ROTATION_DURATION.get();
+        boolean animationOffset = Config.STARBURST_ANIMATION_OFFSET.get();
+
+        // Calculate the time between ticks
+        float time = minecraft.player.tickCount + minecraft.getTimer().getGameTimeDeltaPartialTick(true);
+
+        // Disable the animation offset by default
+        int offset = 0;
+
+        // Offset each item's animation if the option is enabled
+        if (animationOffset) {
+            offset = Math.floorMod(ItemStack.hashItemAndComponents(item),
+                    Math.max(pulseDuration, rotationDuration));
+        }
+
+        // Calculate the animations
+        float phase = ((float) Math.sin((time + offset) * Math.PI * 2.0F / pulseDuration) + 1.0F) / 2.0F;
         float pulseLength = pulseLengthMin + (pulseLengthMax - pulseLengthMin) * phase;
         float pulseWidth = pulseWidthMin + (pulseWidthMax - pulseWidthMin) * phase;
         float rotation = (float) ((time + offset) * Math.PI * 2.0D / rotationDuration);
