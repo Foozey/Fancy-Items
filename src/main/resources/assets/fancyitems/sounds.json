@@ -1,0 +1,5 @@
+{
+  "beam": {
+    "sounds": [{ "name": "fancyitems:beam", "attenuation_distance": 16 }]
+  }
+}

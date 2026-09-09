@@ -5,12 +5,14 @@ import com.fooze.fancyitems.FancyItems;
 import com.fooze.fancyitems.feature.beam.Beam;
 import com.fooze.fancyitems.feature.beam.Glow;
 import com.fooze.fancyitems.feature.beam.Sparkles;
+import com.fooze.fancyitems.feature.beam.Sound;
 import com.fooze.fancyitems.util.Color;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.phys.Vec3;
@@ -28,11 +30,36 @@ import java.util.Map;
 public class BeamEffect {
     private static final Map<Integer, Integer> ungroundedAges = new HashMap<>();
 
-    // Checks if an item uses a loot beam
-    public static boolean hasBeam(ItemEntity item) {
-        return Config.ENABLE_BEAM.get()
+    // Checks if an item has a beam effect
+    public static boolean hasBeamEffect(ItemEntity item) {
+        return Config.ENABLE_BEAM_EFFECT.get()
                 && !item.getItem().isEmpty()
                 && Color.getColor(item.getItem()) != null;
+    }
+
+    // Checks if an item has a beam
+    public static boolean hasBeam() {
+        return Config.ENABLE_BEAM.get();
+    }
+
+    // Checks if an item has a glow
+    public static boolean hasGlow() {
+        return Config.ENABLE_GLOW.get();
+    }
+
+    // Checks if an item has sparkles
+    public static boolean hasSparkles() {
+        return Config.ENABLE_SPARKLES.get();
+    }
+
+    // Checks if an item has sound
+    public static boolean hasSound() {
+        return Config.ENABLE_SOUND.get();
+    }
+
+    // Checks if an item has any beam effect visuals
+    public static boolean hasVisuals() {
+        return hasBeam() || hasGlow() || hasSparkles();
     }
 
     // Updates the beam effect each tick
@@ -47,26 +74,47 @@ public class BeamEffect {
             return;
         }
 
-        // Clear sparkles and ungrounded ages when no level is loaded
-        if (level == null) {
+        // Clear ages, sparkles and sound when there's no level or no effects are enabled
+        if (level == null || !isEnabled()) {
             ungroundedAges.clear();
             Sparkles.clear();
+            Sound.clear();
             return;
         }
 
-        // Remove ungrounded ages for items not on the ground or without a beam effect
+        // Remove ungrounded ages for items not on the ground or items without a beam effect
         ungroundedAges.entrySet().removeIf(entry -> {
             Entity entity = level.getEntity(entry.getKey());
-            return !(entity instanceof ItemEntity item) || !item.onGround() || !hasBeam(item);
+            return !(entity instanceof ItemEntity item) || !item.onGround() || !hasBeamEffect(item);
         });
+
+        // Save ungrounded ages for items on the ground that have a beam effect
+        for (Entity entity : level.entitiesForRendering()) {
+            if (entity instanceof ItemEntity item && item.onGround() && hasBeamEffect(item)) {
+                ungroundedAges.putIfAbsent(item.getId(), item.getAge());
+            }
+        }
 
         // Get the camera position
         Vec3 cameraPos = minecraft.gameRenderer.getMainCamera().getPosition();
 
         // Update sparkles for visible beam effects
-        Sparkles.tick(level, item -> item.onGround()
-                && hasBeam(item)
-                && FadeEffect.isRendered(minecraft, item, cameraPos));
+        if (hasSparkles()) {
+            Sparkles.tick(level, item ->
+                    item.onGround()
+                    && hasBeamEffect(item)
+                    && FadeEffect.isVisible(minecraft, item, cameraPos)
+            );
+        } else {
+            Sparkles.clear();
+        }
+
+        // Update sound
+        if (hasSound()) {
+            Sound.tick(level, cameraPos);
+        } else {
+            Sound.clear();
+        }
     }
 
     // Renders a beam effect
@@ -74,27 +122,16 @@ public class BeamEffect {
             ClientLevel level, ItemEntity item, Vec3 itemPos, Vec3 cameraPos, Camera camera,
             float ticks, float distanceFade, PoseStack transform, MultiBufferSource.BufferSource buffer
     ) {
-        // Calculate the fade animation
-        int fadeDuration = Config.BEAM_EFFECT_FADE_DURATION.get();
-        int ungroundedAge = ungroundedAges.computeIfAbsent(item.getId(), id -> item.getAge());
-        int groundAge = item.getAge() - ungroundedAge;
-        float fade = fadeDuration <= 0 ? 1.0F : Math.min((groundAge + ticks) / fadeDuration, 1.0F);
-        fade = fade * fade * (3.0F - 2.0F * fade) * distanceFade;
+        // Get the fade animation
+        float fade = getFade(item, ticks, distanceFade);
 
         // Don't render if the beam effect isn't visible
         if (fade <= 0.0F) {
             return;
         }
 
-        // Set the default bobbing value
-        float bob = -1.0F;
-
-        // Calculate the item bobbing animation
-        if (IClientItemExtensions.of(item.getItem()).shouldBobAsEntity(item.getItem())) {
-            bob = (float) Math.sin((item.getAge() + ticks) / 10.0F + item.bobOffs);
-        }
-
         // Calculate the animation values
+        float bob = getBob(item, ticks);
         float phase = (bob + 1.0F) / 2.0F;
         float offset = bob * 0.1F + 0.1F;
 
@@ -114,11 +151,55 @@ public class BeamEffect {
                 itemPos.z - cameraPos.z
         );
 
-        // Draw the beam effect
-        Matrix4f matrix = new Matrix4f(transform.last().pose());
-        Beam.render(level, item, itemPos, cameraPos, transform, phase, offset, fade, red, green, blue);
-        Glow.render(transform, phase, fade, red, green, blue);
-        Sparkles.render(item, matrix, camera, ticks, fade, red, green, blue, buffer);
+        // Draw the beam and glow
+        if (hasBeam()) {
+            Beam.render(level, item, itemPos, cameraPos, transform, phase, offset, fade, red, green, blue);
+        }
+
+        if (hasGlow()) {
+            Glow.render(transform, phase, fade, red, green, blue);
+        }
+
+        // Draw sparkles
+        if (hasSparkles()) {
+            Matrix4f matrix = new Matrix4f(transform.last().pose());
+            Sparkles.render(item, matrix, camera, ticks, fade, red, green, blue, buffer);
+        }
+
         transform.popPose();
+    }
+
+    // Gets the texture style to use for the beam effect
+    public static ResourceLocation getTexture(ResourceLocation fancy, ResourceLocation simple) {
+        if (Config.BEAM_EFFECT_STYLE.get() == Config.BeamEffectStyle.SIMPLE) {
+            return simple;
+        } else {
+            return fancy;
+        }
+    }
+
+    // Gets the fade animation
+    public static float getFade(ItemEntity item, float ticks, float distanceFade) {
+        int duration = Config.BEAM_EFFECT_FADE_DURATION.get();
+        int ungroundedAge = ungroundedAges.computeIfAbsent(item.getId(), id -> item.getAge());
+        int groundedAge = item.getAge() - ungroundedAge;
+        float fade = Math.min((groundedAge + ticks) / duration, 1.0F);
+        return fade * fade * (3.0F - 2.0F * fade) * distanceFade;
+    }
+
+    // Gets the bob animation
+    public static float getBob(ItemEntity item, float ticks) {
+        if (IClientItemExtensions.of(item.getItem()).shouldBobAsEntity(item.getItem())) {
+            return (float) Math.sin((item.getAge() + ticks) / 10.0F + item.bobOffs);
+        }
+
+        return -1.0F;
+    }
+
+    // Checks if at least one beam effect option is enabled
+    private static boolean isEnabled() {
+        return Config.ENABLE_BEAM_EFFECT.get() && (
+                hasBeam() || hasGlow() || hasSparkles() || hasSound()
+        );
     }
 }

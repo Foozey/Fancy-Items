@@ -18,7 +18,7 @@ public class ItemEntityRendererMixin {
             ItemEntity itemEntity, float entityYaw, float partialTicks, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, CallbackInfo callback
     ) {
-        if (!Item.isRendered() && itemEntity.onGround()) {
+        if (Item.isEnabled() && !Item.isRendered() && itemEntity.onGround()) {
             callback.cancel();
         }
     }

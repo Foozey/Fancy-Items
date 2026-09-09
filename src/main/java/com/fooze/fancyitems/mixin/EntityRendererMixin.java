@@ -14,7 +14,7 @@ public abstract class EntityRendererMixin {
     // Hides item shadows during beam effects
     @Inject(method = "getShadowRadius", at = @At("RETURN"), cancellable = true)
     private void fancyitems$hideShadow(Entity entity, CallbackInfoReturnable<Float> callback) {
-        if (entity instanceof ItemEntity itemEntity && BeamEffect.hasBeam(itemEntity)) {
+        if (entity instanceof ItemEntity itemEntity && BeamEffect.hasBeamEffect(itemEntity)) {
             callback.setReturnValue(0.0F);
         }
     }

@@ -12,6 +12,6 @@ public class Emitter {
 
     // Returns the number of sparkles to be emitted
     public int amount() {
-        return Math.max(0, Math.round(Config.SPARKLES_AMOUNT.get() * Sparkles.random()));
+        return Math.round(Config.SPARKLES_AMOUNT.get() * Sparkles.random());
     }
 }

@@ -12,7 +12,6 @@ public class Sparkle {
     public final float distance = Sparkles.random();
     public final float driftAmount = Config.SPARKLES_DRIFT_AMOUNT.get().floatValue() * Sparkles.random();
     public final int driftFrequency = Math.max(1, Math.round(Config.SPARKLES_DRIFT_FREQUENCY.get() * Sparkles.random()));
-    public final int driftDuration = Math.max(1, Math.round(Config.SPARKLES_DRIFT_DURATION.get() * Sparkles.random()));
 
     // Position and animation
     private final float originX = (Sparkles.RANDOM.nextFloat() - 0.5F) * Beam.width();
@@ -24,7 +23,6 @@ public class Sparkle {
     public float previousZ = originZ;
     public float currentZ = originZ;
     private int driftTimer = driftFrequency;
-    private int driftProgress = driftDuration;
     private float driftOriginX = originX;
     private float driftOriginZ = originZ;
     private float driftTargetX = originX;
@@ -41,8 +39,8 @@ public class Sparkle {
             return true;
         }
 
-        // Change drift target after the previous drift finishes
-        if (++driftTimer >= driftFrequency && driftProgress >= driftDuration) {
+        // Change drift target when the current drift finishes
+        if (++driftTimer >= driftFrequency) {
             float angle = Sparkles.RANDOM.nextFloat() * (float) Math.PI * 2.0F;
             float distance = Sparkles.RANDOM.nextFloat() * driftAmount;
             driftOriginX = currentX;
@@ -50,16 +48,13 @@ public class Sparkle {
             driftTargetX = originX + (float) Math.cos(angle) * distance;
             driftTargetZ = originZ + (float) Math.sin(angle) * distance;
             driftTimer = 0;
-            driftProgress = 0;
         }
 
         // Smoothly move towards the drift target
-        if (driftProgress < driftDuration) {
-            float progress = (float) ++driftProgress / driftDuration;
-            progress = progress * progress * (3.0F - 2.0F * progress);
-            currentX = driftOriginX + (driftTargetX - driftOriginX) * progress;
-            currentZ = driftOriginZ + (driftTargetZ - driftOriginZ) * progress;
-        }
+        float progress = (float) driftTimer / driftFrequency;
+        progress = progress * progress * (3.0F - 2.0F * progress);
+        currentX = driftOriginX + (driftTargetX - driftOriginX) * progress;
+        currentZ = driftOriginZ + (driftTargetZ - driftOriginZ) * progress;
 
         return false;
     }

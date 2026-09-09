@@ -1,7 +1,8 @@
 package com.fooze.fancyitems.feature.beam;
 
 import com.fooze.fancyitems.Config;
-import com.fooze.fancyitems.util.Texture;
+import com.fooze.fancyitems.feature.BeamEffect;
+import com.fooze.fancyitems.util.Asset;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
@@ -12,9 +13,9 @@ import net.minecraft.resources.ResourceLocation;
 import org.joml.Matrix4f;
 
 public class Glow {
-    // Rendering
-    private static final ResourceLocation TEXTURE = Texture.misc("glow.png");
-    private static final RenderType RENDER_TYPE = RenderType.entityShadow(TEXTURE);
+    // Textures
+    private static final ResourceLocation FANCY_TEXTURE = Asset.getTexture("glow_fancy.png");
+    private static final ResourceLocation SIMPLE_TEXTURE = Asset.getTexture("glow_simple.png");
 
     // Renders a glow for an item with a beam effect
     public static void render(PoseStack transform, float phase, float fade, int red, int green, int blue) {
@@ -24,12 +25,14 @@ public class Glow {
         float scale = Config.GLOW_SCALE.get().floatValue() * (pulseMin + (pulseMax - pulseMin) * phase);
 
         // Prepare rendering
-        BufferBuilder vertices = Tesselator.getInstance().begin(RENDER_TYPE.mode(), RENDER_TYPE.format());
+        ResourceLocation texture = BeamEffect.getTexture(FANCY_TEXTURE, SIMPLE_TEXTURE);
+        RenderType renderType = RenderType.entityShadow(texture);
+        BufferBuilder vertices = Tesselator.getInstance().begin(renderType.mode(), renderType.format());
 
         // Draw the glow
         Matrix4f matrix = transform.last().pose();
         add(vertices, matrix, scale, fade, red, green, blue);
-        RENDER_TYPE.draw(vertices.buildOrThrow());
+        renderType.draw(vertices.buildOrThrow());
     }
 
     // Adds a ground glow

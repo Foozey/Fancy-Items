@@ -14,14 +14,26 @@ import org.joml.Matrix4f;
 
 public class StarburstEffect {
     // Renders a starburst effect behind inventory items
-    public static void render(GuiGraphics transform, ItemStack stack, int seed) {
+    public static void render(GuiGraphics transform, ItemStack item, int seed) {
+        // Don't render if the effect is disabled or there's no item
+        if (!Config.ENABLE_STARBURST_EFFECT.get() || item.isEmpty()) {
+            return;
+        }
+
         // Get the instance and screen
         Minecraft minecraft = Minecraft.getInstance();
         Screen screen = minecraft.screen;
 
-        // Don't render if the effect is disabled, there's no item, or the screen is invalid
-        if (!Config.ENABLE_STARBURST.get() || stack.isEmpty() || screen != null
-                && !(screen instanceof AbstractContainerScreen<?>)) {
+        // Don't render if the screen is invalid
+        if (screen != null && !(screen instanceof AbstractContainerScreen)) {
+            return;
+        }
+
+        // Get the item color
+        Integer color = Color.getColor(item);
+
+        // Don't render if there's no color
+        if (color == null) {
             return;
         }
 
@@ -30,56 +42,33 @@ public class StarburstEffect {
         float rayLength = Config.STARBURST_RAY_LENGTH.get().floatValue();
         float rayWidth = Config.STARBURST_RAY_WIDTH.get().floatValue();
         float lengthVariation = Config.STARBURST_LENGTH_VARIATION.get().floatValue();
-        int lengthVariationCount = Math.max(Config.STARBURST_LENGTH_VARIATION_COUNT.get(), 1);
+        int lengthVariationCount = Config.STARBURST_LENGTH_VARIATION_COUNT.get();
         float widthVariation = Config.STARBURST_WIDTH_VARIATION.get().floatValue();
-        int widthVariationCount = Math.max(Config.STARBURST_WIDTH_VARIATION_COUNT.get(), 1);
+        int widthVariationCount = Config.STARBURST_WIDTH_VARIATION_COUNT.get();
 
-        // Calculate the animation values
+        // Calculate the animation
         int pulseDuration = Config.STARBURST_PULSE_DURATION.get();
         int rotationDuration = Config.STARBURST_ROTATION_DURATION.get();
-        float phase = 0.0F;
-        float time = getTime(minecraft);
-        int offset = Math.floorMod(seed + stack.hashCode(), Math.max(Math.max(pulseDuration, rotationDuration), 1));
-        float pulseLength = 1.0F;
-        float pulseWidth = 1.0F;
-
-        // Only calculate the animation phase if there's a pulse duration
-        if (pulseDuration > 0) {
-            phase = ((float) Math.sin((time + offset) * Math.PI * 2.0F / pulseDuration) + 1.0F) / 2.0F;
-        }
-
-        // Only calculate the pulse length and width if there's a pulse duration
-        if (pulseDuration > 0) {
-            float pulseLengthMin = Config.STARBURST_PULSE_LENGTH_MIN.get().floatValue();
-            float pulseLengthMax = Config.STARBURST_PULSE_LENGTH_MAX.get().floatValue();
-            float pulseWidthMin = Config.STARBURST_PULSE_WIDTH_MIN.get().floatValue();
-            float pulseWidthMax = Config.STARBURST_PULSE_WIDTH_MAX.get().floatValue();
-            pulseLength = pulseLengthMin + (pulseLengthMax - pulseLengthMin) * phase;
-            pulseWidth = pulseWidthMin + (pulseWidthMax - pulseWidthMin) * phase;
-        }
+        float time = minecraft.player.tickCount + minecraft.getTimer().getGameTimeDeltaPartialTick(true);
+        int offset = Math.floorMod(seed + item.hashCode(), Math.max(pulseDuration, rotationDuration));
+        float phase = ((float) Math.sin((time + offset) * Math.PI * 2.0F / pulseDuration) + 1.0F) / 2.0F;
+        float pulseLengthMin = Config.STARBURST_PULSE_LENGTH_MIN.get().floatValue();
+        float pulseLengthMax = Config.STARBURST_PULSE_LENGTH_MAX.get().floatValue();
+        float pulseWidthMin = Config.STARBURST_PULSE_WIDTH_MIN.get().floatValue();
+        float pulseWidthMax = Config.STARBURST_PULSE_WIDTH_MAX.get().floatValue();
+        float pulseLength = pulseLengthMin + (pulseLengthMax - pulseLengthMin) * phase;
+        float pulseWidth = pulseWidthMin + (pulseWidthMax - pulseWidthMin) * phase;
+        float rotation = (float) ((time + offset) * Math.PI * 2.0D / rotationDuration);
 
         // Prepare rendering
         VertexConsumer rays = transform.bufferSource().getBuffer(RenderType.dragonRays());
-        Integer color = Color.getColor(stack);
 
-        // Only render if there's a color
-        if (color == null) {
-            return;
-        }
-
-        // Draw rays in a rotating circle with varying length and width
+        // Draw rays in a pulsing, rotating circle with varying length and width
         for (int ray = 0; ray < rayCount; ray++) {
-            // Calculate ray angle
-            float angle = (float) (ray * (Math.PI * 2.0D / rayCount));
-
-            // Only rotate if there's rotation duration
-            if (rotationDuration > 0) {
-                angle += (float) ((time + offset) * Math.PI * 2.0D / rotationDuration);
-            }
-
-            // Calculate ray length and width
+            // Calculate ray length, width, and angle
             float length = pulseLength * (rayLength + (ray % lengthVariationCount) * lengthVariation);
             float width = pulseWidth * (rayWidth + (ray % widthVariationCount) * widthVariation);
+            float angle = (float) (ray * (Math.PI * 2.0D / rayCount)) + rotation;
 
             // Draw the ray
             transform.pose().pushPose();
@@ -88,17 +77,6 @@ public class StarburstEffect {
             addRay(rays, matrix, length, width, color);
             transform.pose().popPose();
         }
-    }
-
-    // Gets the time used for the animation
-    private static float getTime(Minecraft minecraft) {
-        // If a player exists, align the animation with the current tick
-        if (minecraft.player != null) {
-            return minecraft.player.tickCount + minecraft.getTimer().getGameTimeDeltaPartialTick(true);
-        }
-
-        // Continue animating when no player exists, such as menus
-        return System.currentTimeMillis() / 50.0F;
     }
 
     // Draws a triangular ray

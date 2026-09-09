@@ -1,9 +1,10 @@
 package com.fooze.fancyitems.feature.beam;
 
 import com.fooze.fancyitems.Config;
+import com.fooze.fancyitems.feature.BeamEffect;
 import com.fooze.fancyitems.feature.beam.sparkles.Emitter;
 import com.fooze.fancyitems.feature.beam.sparkles.Sparkle;
-import com.fooze.fancyitems.util.Texture;
+import com.fooze.fancyitems.util.Asset;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -23,9 +24,9 @@ import java.util.UUID;
 import java.util.function.Predicate;
 
 public class Sparkles {
-    // Rendering
-    private static final ResourceLocation TEXTURE = Texture.misc("sparkle.png");
-    private static final RenderType RENDER_TYPE = RenderType.entityNoOutline(TEXTURE);
+    // Textures
+    private static final ResourceLocation FANCY_TEXTURE = Asset.getTexture("sparkle_fancy.png");
+    private static final ResourceLocation SIMPLE_TEXTURE = Asset.getTexture("sparkle_simple.png");
 
     // Util
     private static final Map<UUID, Emitter> EMITTERS = new HashMap<>();
@@ -58,7 +59,7 @@ public class Sparkles {
             }
         }
 
-        // Remove sparkles for items without loot beams
+        // Remove sparkles for items without beam effects
         EMITTERS.values().removeIf(emitter -> emitter.lastUpdate != currentUpdate);
     }
 
@@ -80,17 +81,19 @@ public class Sparkles {
         }
 
         // Prepare rendering
-        VertexConsumer vertices = buffer.getBuffer(RENDER_TYPE);
+        ResourceLocation texture = BeamEffect.getTexture(FANCY_TEXTURE, SIMPLE_TEXTURE);
+        RenderType renderType = RenderType.entityNoOutline(texture);
+        VertexConsumer vertices = buffer.getBuffer(renderType);
+        Vector3f left = camera.getLeftVector();
+        Vector3f up = camera.getUpVector();
 
         // Add the sparkles to the render buffer
         for (Sparkle sparkle : emitter.sparkles) {
-            Vector3f left = camera.getLeftVector();
-            Vector3f up = camera.getUpVector();
             add(vertices, matrix, left, up, sparkle, ticks, fade, red, green, blue);
         }
 
         // Draw the sparkles
-        buffer.endBatch(RENDER_TYPE);
+        buffer.endBatch(renderType);
     }
 
     // Adds a camera-facing sparkle
