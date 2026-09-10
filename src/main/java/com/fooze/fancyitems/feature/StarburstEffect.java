@@ -4,7 +4,7 @@ import com.fooze.fancyitems.Config;
 import com.fooze.fancyitems.util.Color;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
-import net.minecraft.client.Minecraft;
+import net.minecraft.Util;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.world.item.ItemStack;
@@ -17,9 +17,6 @@ public class StarburstEffect {
         if (!Config.ENABLE_STARBURST_EFFECT.get() || item.isEmpty()) {
             return;
         }
-
-        // Get the Minecraft instance
-        Minecraft minecraft = Minecraft.getInstance();
 
         // Get the item color
         Integer color = Color.getColor(item);
@@ -45,13 +42,11 @@ public class StarburstEffect {
         int rotationDuration = Config.STARBURST_ROTATION_DURATION.get();
         boolean animationOffset = Config.STARBURST_ANIMATION_OFFSET.get();
 
-        // Calculate the time between ticks
-        float time = minecraft.player.tickCount + minecraft.getTimer().getGameTimeDeltaPartialTick(true);
-
-        // Disable the animation offset by default
+        // Get the animation time and offset
+        float time = Util.getMillis() / 50.0F;
         int offset = 0;
 
-        // Offset each item's animation if the option is enabled
+        // Only offset each item's animation if the option is enabled
         if (animationOffset) {
             offset = Math.floorMod(ItemStack.hashItemAndComponents(item),
                     Math.max(pulseDuration, rotationDuration));
