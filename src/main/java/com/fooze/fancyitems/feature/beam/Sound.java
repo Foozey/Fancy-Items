@@ -22,7 +22,6 @@ public class Sound extends AbstractTickableSoundInstance {
     private static final SoundEvent BEAM = SoundEvent.createVariableRangeEvent(Asset.getSound("beam"));
     private static final Map<ItemEntity, Sound> SOUNDS = new HashMap<>();
     private static final Map<ItemEntity, Float> PITCHES = new HashMap<>();
-    private static final float RANGE = 16.0F;
     private final ItemEntity item;
 
     // Creates a beam sound for an item
@@ -81,6 +80,7 @@ public class Sound extends AbstractTickableSoundInstance {
     private static boolean isAudible(ItemEntity item, Vec3 cameraPos) {
         Minecraft minecraft = Minecraft.getInstance();
         double distance = cameraPos.distanceToSqr(item.position());
+        float range = Config.SOUND_RANGE.get().floatValue();
 
         return Config.ENABLE_SOUND.get()
                 && Config.SOUND_VOLUME.get() > 0.0D
@@ -89,7 +89,7 @@ public class Sound extends AbstractTickableSoundInstance {
                 && item.onGround()
                 && BeamEffect.hasBeamEffect(item)
                 && FadeEffect.isVisible(minecraft, item, cameraPos)
-                && distance < RANGE * RANGE
+                && distance < range * range
                 && item.shouldRenderAtSqrDistance(distance);
     }
 

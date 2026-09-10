@@ -19,7 +19,7 @@ public class StarburstEffect {
         }
 
         // Get the item color
-        Integer color = Color.getColor(item);
+        Integer color = Color.getColor(item, Config.STARBURST_EFFECT_ALLOW_COMMON.get());
 
         // Don't render if there's no color
         if (color == null) {
@@ -30,6 +30,7 @@ public class StarburstEffect {
         int rayCount = Config.STARBURST_RAY_COUNT.get();
         float rayLength = Config.STARBURST_RAY_LENGTH.get().floatValue();
         float rayWidth = Config.STARBURST_RAY_WIDTH.get().floatValue();
+        float intensity = Config.STARBURST_INTENSITY.get().floatValue();
         float lengthVariation = Config.STARBURST_LENGTH_VARIATION.get().floatValue();
         int lengthVariationCount = Config.STARBURST_LENGTH_VARIATION_COUNT.get();
         float widthVariation = Config.STARBURST_WIDTH_VARIATION.get().floatValue();
@@ -72,20 +73,24 @@ public class StarburstEffect {
             transform.pose().pushPose();
             transform.pose().mulPose(Axis.ZP.rotation(angle));
             Matrix4f matrix = transform.pose().last().pose();
-            addRay(rays, matrix, length, width, color);
+            addRay(rays, matrix, length, width, color, intensity);
             transform.pose().popPose();
         }
     }
 
     // Draws a triangular ray
-    private static void addRay(VertexConsumer vertices, Matrix4f matrix, float length, float width, int color) {
+    private static void addRay(
+            VertexConsumer vertices, Matrix4f matrix,
+            float length, float width, int color, float intensity
+    ) {
         // Get the RGB color channels
         int red = color >> 16 & 0xFF;
         int green = color >> 8 & 0xFF;
         int blue = color & 0xFF;
+        int alpha = (int) (intensity * 255.0F);
 
         // Add a triangle that fades outward from the center
-        vertices.addVertex(matrix, 0.0F, 0.0F, 0.0F).setColor(red, green, blue, 255);
+        vertices.addVertex(matrix, 0.0F, 0.0F, 0.0F).setColor(red, green, blue, alpha);
         vertices.addVertex(matrix, width, length, 0.0F).setColor(red, green, blue, 0);
         vertices.addVertex(matrix, -width, length, 0.0F).setColor(red, green, blue, 0);
     }

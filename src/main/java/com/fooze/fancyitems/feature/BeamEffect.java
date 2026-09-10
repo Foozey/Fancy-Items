@@ -34,7 +34,7 @@ public class BeamEffect {
     public static boolean hasBeamEffect(ItemEntity item) {
         return Config.ENABLE_BEAM_EFFECT.get()
                 && !item.getItem().isEmpty()
-                && Color.getColor(item.getItem()) != null;
+                && Color.getColor(item.getItem(), Config.BEAM_EFFECT_ALLOW_COMMON.get()) != null;
     }
 
     // Checks if an item has a beam
@@ -136,7 +136,7 @@ public class BeamEffect {
         float offset = bob * 0.1F + 0.1F;
 
         // Get the item's beam color
-        int color = Color.getColor(item.getItem());
+        int color = Color.getColor(item.getItem(), Config.BEAM_EFFECT_ALLOW_COMMON.get());
         int red = color >> 16 & 0xFF;
         int green = color >> 8 & 0xFF;
         int blue = color & 0xFF;
@@ -173,9 +173,9 @@ public class BeamEffect {
     public static ResourceLocation getTexture(ResourceLocation fancy, ResourceLocation simple) {
         if (Config.BEAM_EFFECT_STYLE.get() == Config.BeamEffectStyle.SIMPLE) {
             return simple;
-        } else {
-            return fancy;
         }
+
+        return fancy;
     }
 
     // Gets the fade animation

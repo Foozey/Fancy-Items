@@ -24,7 +24,7 @@ public class FadeEffect {
         }
 
         float fadeEnd = getRenderDistance(minecraft, item);
-        float fadeStart = Math.max(0.0F, fadeEnd - 16.0F);
+        float fadeStart = Math.max(0.0F, fadeEnd - Config.FADE_DISTANCE.get().floatValue());
         float distance = (float) cameraPos.distanceTo(itemPos);
         float fade = Mth.clamp((fadeEnd - distance) / (fadeEnd - fadeStart), 0.0F, 1.0F);
         return fade * fade * (3.0F - 2.0F * fade);

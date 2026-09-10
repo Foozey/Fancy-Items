@@ -8,16 +8,20 @@ import net.minecraft.world.item.Rarity;
 
 public class Color {
     // Gets the color of an item's name or rarity
-    public static Integer getColor(ItemStack stack) {
+    public static Integer getColor(ItemStack stack, boolean includeCommon) {
         Integer nameColor = findColor(stack.getHoverName());
 
-        // Use the item's name color if it's not white
-        if (nameColor != null && !nameColor.equals(ChatFormatting.WHITE.getColor())) {
+        // Use the item's name color, including white when common items are enabled
+        if (nameColor != null && (includeCommon || !nameColor.equals(ChatFormatting.WHITE.getColor()))) {
             return nameColor;
         }
 
-        // Ignore common items
+        // Ignore common items unless enabled
         if (stack.getRarity() == Rarity.COMMON) {
+            if (includeCommon) {
+                return Rarity.COMMON.color().getColor();
+            }
+
             return null;
         }
 
