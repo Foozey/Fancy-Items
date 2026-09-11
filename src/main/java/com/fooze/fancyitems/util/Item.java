@@ -33,7 +33,8 @@ public class Item {
 
     // Checks whether custom item rendering is enabled
     public static boolean isEnabled() {
-        return Config.ENABLE_FADE_EFFECT.get() || Config.ENABLE_BEAM_EFFECT.get() && BeamEffect.hasVisuals();
+        return !IrisAPI.shadersActive() && (Config.ENABLE_FADE_EFFECT.get()
+                || Config.ENABLE_BEAM_EFFECT.get() && BeamEffect.hasVisuals());
     }
 
     // Checks whether an item is rendered with the custom renderer

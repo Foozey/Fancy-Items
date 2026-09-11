@@ -48,7 +48,7 @@
   "fancyitems.configuration.starburstAnimationOffset.tooltip": "Whether each starburst animation has a different offset",
 
   "fancyitems.configuration.enableBeamEffect": "Enable Beam Effect",
-  "fancyitems.configuration.enableBeamEffect.tooltip": "Whether to enable the beam effect for items with a rarity or colored name",
+  "fancyitems.configuration.enableBeamEffect.tooltip": "Whether to enable the beam effect for items with a rarity or colored name\n\n§cDoesn't work while an Iris shader pack is active",
   "fancyitems.configuration.beamEffectAllowCommon": "Allow Common Items",
   "fancyitems.configuration.beamEffectAllowCommon.tooltip": "Whether to allow common items and items with a white name to have a beam effect",
   "fancyitems.configuration.beamEffectStyle": "Style",
@@ -127,7 +127,7 @@
   "fancyitems.configuration.soundPulseMax.tooltip": "Maximum volume multiplier of the beam sound during pulsing",
 
   "fancyitems.configuration.enableFadeEffect": "Enable Fade Effect",
-  "fancyitems.configuration.enableFadeEffect.tooltip": "Whether to enable the fade effect for items at their render distance",
+  "fancyitems.configuration.enableFadeEffect.tooltip": "Whether to enable the fade effect for items at their render distance\n\n§cDoesn't work while an Iris shader pack is active",
   "fancyitems.configuration.fadeDistance": "Distance",
   "fancyitems.configuration.fadeDistance.tooltip": "Number of blocks used to complete the fade"
 }

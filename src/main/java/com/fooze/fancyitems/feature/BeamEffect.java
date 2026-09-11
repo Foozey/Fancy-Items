@@ -7,6 +7,7 @@ import com.fooze.fancyitems.feature.beam.Glow;
 import com.fooze.fancyitems.feature.beam.Sparkles;
 import com.fooze.fancyitems.feature.beam.Sound;
 import com.fooze.fancyitems.util.Color;
+import com.fooze.fancyitems.util.IrisAPI;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -32,7 +33,7 @@ public class BeamEffect {
 
     // Checks if an item has a beam effect
     public static boolean hasBeamEffect(ItemEntity item) {
-        return Config.ENABLE_BEAM_EFFECT.get()
+        return !IrisAPI.shadersActive() && Config.ENABLE_BEAM_EFFECT.get()
                 && !item.getItem().isEmpty()
                 && Color.getColor(item.getItem(), Config.BEAM_EFFECT_ALLOW_COMMON.get()) != null;
     }
@@ -198,7 +199,7 @@ public class BeamEffect {
 
     // Checks if at least one beam effect option is enabled
     private static boolean isEnabled() {
-        return Config.ENABLE_BEAM_EFFECT.get() && (
+        return !IrisAPI.shadersActive() && Config.ENABLE_BEAM_EFFECT.get() && (
                 hasBeam() || hasGlow() || hasSparkles() || hasSound()
         );
     }
