@@ -12,6 +12,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
@@ -33,7 +34,8 @@ public class BeamEffect {
 
     // Checks if an item has a beam effect
     public static boolean hasBeamEffect(ItemEntity item) {
-        return !IrisAPI.shadersActive() && Config.ENABLE_BEAM_EFFECT.get()
+        return (!IrisAPI.shadersActive() || Config.FORCE_IRIS_COMPATIBILITY.get())
+                && Config.ENABLE_BEAM_EFFECT.get()
                 && !item.getItem().isEmpty()
                 && Color.getColor(item.getItem(), Config.BEAM_EFFECT_ALLOW_COMMON.get()) != null;
     }
@@ -170,13 +172,22 @@ public class BeamEffect {
         transform.popPose();
     }
 
-    // Gets the texture style to use for the beam effect
+    // Gets the texture to use for the beam effect
     public static ResourceLocation getTexture(ResourceLocation fancy, ResourceLocation simple) {
         if (Config.BEAM_EFFECT_STYLE.get() == Config.BeamEffectStyle.SIMPLE) {
             return simple;
         }
 
         return fancy;
+    }
+
+    // Gets the render type to use for the beam effect
+    public static RenderType getRenderType(ResourceLocation texture) {
+        if (IrisAPI.shadersActive() && Config.FORCE_IRIS_COMPATIBILITY.get()) {
+            return RenderType.entityTranslucentEmissive(texture, false);
+        }
+
+        return RenderType.entityNoOutline(texture);
     }
 
     // Gets the fade animation
@@ -199,8 +210,9 @@ public class BeamEffect {
 
     // Checks if at least one beam effect option is enabled
     private static boolean isEnabled() {
-        return !IrisAPI.shadersActive() && Config.ENABLE_BEAM_EFFECT.get() && (
-                hasBeam() || hasGlow() || hasSparkles() || hasSound()
+        return (!IrisAPI.shadersActive() || Config.FORCE_IRIS_COMPATIBILITY.get())
+                && Config.ENABLE_BEAM_EFFECT.get()
+                && (hasBeam() || hasGlow() || hasSparkles() || hasSound()
         );
     }
 }

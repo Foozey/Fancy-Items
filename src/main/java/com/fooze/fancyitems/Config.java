@@ -87,6 +87,9 @@ public class Config {
         ENABLE_FADE_EFFECT = BUILDER.define("enableFadeEffect", true);
         FADE_DISTANCE = BUILDER.defineInRange("fadeDistance", 16.0D, 1.0D, 64.0D);
         BUILDER.pop();
+
+        // Other
+        FORCE_IRIS_COMPATIBILITY = BUILDER.define("forceIrisCompatibility", false);
     }
 
     // Starburst Effect
@@ -152,6 +155,9 @@ public class Config {
     // Fade Effect
     public static final ModConfigSpec.BooleanValue ENABLE_FADE_EFFECT;
     public static final ModConfigSpec.DoubleValue FADE_DISTANCE;
+
+    // Other
+    public static final ModConfigSpec.BooleanValue FORCE_IRIS_COMPATIBILITY;
 
     static final ModConfigSpec SPEC = BUILDER.build();
 }

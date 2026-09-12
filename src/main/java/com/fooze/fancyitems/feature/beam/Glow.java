@@ -26,7 +26,7 @@ public class Glow {
 
         // Prepare rendering
         ResourceLocation texture = BeamEffect.getTexture(FANCY_TEXTURE, SIMPLE_TEXTURE);
-        RenderType renderType = RenderType.entityNoOutline(texture);
+        RenderType renderType = BeamEffect.getRenderType(texture);
         BufferBuilder vertices = Tesselator.getInstance().begin(renderType.mode(), renderType.format());
 
         // Draw the glow

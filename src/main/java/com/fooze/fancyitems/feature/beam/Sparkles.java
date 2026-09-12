@@ -82,7 +82,7 @@ public class Sparkles {
 
         // Prepare rendering
         ResourceLocation texture = BeamEffect.getTexture(FANCY_TEXTURE, SIMPLE_TEXTURE);
-        RenderType renderType = RenderType.entityNoOutline(texture);
+        RenderType renderType = BeamEffect.getRenderType(texture);
         VertexConsumer vertices = buffer.getBuffer(renderType);
         Vector3f left = camera.getLeftVector();
         Vector3f up = camera.getUpVector();
