@@ -12,7 +12,8 @@ public class IrisAPI {
             Class<?> irisApi = Class.forName("net.irisshaders.iris.api.v0.IrisApi");
             api = irisApi.getMethod("getInstance").invoke(null);
             shadersActive = irisApi.getMethod("isShaderPackInUse");
-        } catch (ReflectiveOperationException | LinkageError ignored) {}
+        } catch (ReflectiveOperationException | LinkageError ignored) {
+        }
     }
 
     // Checks if a shader pack is active

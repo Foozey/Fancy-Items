@@ -67,8 +67,7 @@ public class Sound extends AbstractTickableSoundInstance {
         for (Entity entity : level.entitiesForRendering()) {
             if (entity instanceof ItemEntity item
                     && isAudible(item, cameraPos)
-                    && !SOUNDS.containsKey(item))
-            {
+                    && !SOUNDS.containsKey(item)) {
                 Sound sound = new Sound(item);
                 SOUNDS.put(item, sound);
                 minecraft.getSoundManager().play(sound);

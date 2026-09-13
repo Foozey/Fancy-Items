@@ -4,25 +4,25 @@ import com.fooze.fancyitems.Config;
 import com.fooze.fancyitems.FancyItems;
 import com.fooze.fancyitems.feature.beam.Beam;
 import com.fooze.fancyitems.feature.beam.Glow;
-import com.fooze.fancyitems.feature.beam.Sparkles;
 import com.fooze.fancyitems.feature.beam.Sound;
+import com.fooze.fancyitems.feature.beam.Sparkles;
 import com.fooze.fancyitems.util.Color;
 import com.fooze.fancyitems.util.IrisAPI;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 import org.joml.Matrix4f;
 
 import java.util.HashMap;
@@ -103,8 +103,7 @@ public class BeamEffect {
 
         // Update sparkles for visible beam effects
         if (hasSparkles()) {
-            Sparkles.tick(level, item ->
-                    item.onGround()
+            Sparkles.tick(level, item -> item.onGround()
                     && hasBeamEffect(item)
                     && FadeEffect.isVisible(minecraft, item, cameraPos)
             );
